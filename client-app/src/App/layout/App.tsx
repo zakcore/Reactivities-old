@@ -1,5 +1,4 @@
 import React from 'react';
-import './App.css';
 import axios from 'axios';
 import {  Icon, Header, List } from 'semantic-ui-react'
 
@@ -7,12 +6,12 @@ import {  Icon, Header, List } from 'semantic-ui-react'
 class App extends React.Component {
  
 state={
-  values:[]
+  activities:[]
 }
    componentDidMount() {
-axios('http://localhost:5000/api/values')
+axios('http://localhost:5000/api/activities')
 .then((Response)=>{
-  this.setState({values:Response.data})})
+  this.setState({activities:Response.data})})
 }
 
   render() {
@@ -24,8 +23,8 @@ axios('http://localhost:5000/api/values')
     </Header>
 
       <List>
-       {this.state.values.map((x:any)=>
-           <List.Item key={x.id} >{x.name}</List.Item>
+       {this.state.activities.map((x:any)=>
+           <List.Item key={x.id} >{x.title}</List.Item>
        )}
       </List>
         </div>
