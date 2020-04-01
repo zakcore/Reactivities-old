@@ -1,22 +1,27 @@
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { Segment, Form, Button } from "semantic-ui-react";
 import { IActivity } from "../../../App/models/activity";
 import {v4 as uuid} from 'uuid';
 interface Iprops {
   seteditmode: (editmode: boolean) => void;
-  Activity: IActivity;
+  zctivity: IActivity;
 HandleCreateActivity:(activity:IActivity)=>void;
 HandleEditActivity:(activity:IActivity)=>void;
+submiting:boolean;
 }
+
 export const ActivityForm: React.FC<Iprops> = ({
   seteditmode,
-  Activity: erractivity,
+  zctivity,
   HandleCreateActivity,
-  HandleEditActivity
+  HandleEditActivity,
+  submiting,
+  
 }) => {
+
   const intializeactivity = () => {
-    if (erractivity) {
-      return erractivity;
+    if (zctivity) {
+      return zctivity;
     } else {
       return {
         id: "",
@@ -28,30 +33,51 @@ export const ActivityForm: React.FC<Iprops> = ({
         venue: ""
       };
     }
+   
+
   };
+
+ 
   const [Activity, initactivity] = useState<IActivity>(intializeactivity);
-  const onchangeeventhandler = (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const [btnst,setbtnst]=useState<boolean>(true);
+  const  onchangeeventhandler = (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.currentTarget;
+     initactivity({ ...Activity, [name]: value });
 
-    initactivity({ ...Activity, [name]: value });
-  };
+     
+      
+   };
+  
+   useEffect(()=>{
+    if(JSON.stringify(zctivity)!==JSON.stringify(Activity)){
+      setbtnst(false)
+     
+    }else{
+      setbtnst(true)
+    }
 
+
+   },[Activity])
   const onsubmithandler=()=>{
 
     if(Activity.id.length>0){
 
       HandleEditActivity(Activity);
+      
     }else{
       HandleCreateActivity({...Activity,id:uuid()})
 
     }
 
+    
   }
   return (
+    
     <Segment>
-      <Form onSubmit={onsubmithandler}>
+     
+      <Form  onSubmit={onsubmithandler}>
         <Form.Input
-          onChange={onchangeeventhandler}
+          onChange={(e:FormEvent<HTMLInputElement | HTMLTextAreaElement>)=>onchangeeventhandler(e)}
           name="title"
           placeholder="Title"
           value={Activity.title}
@@ -89,8 +115,10 @@ export const ActivityForm: React.FC<Iprops> = ({
           value={Activity.venue}
         />
         <Button.Group widths={2}>
-          <Button type="submit" positive content="submit" />
+      
+          <Button disabled={btnst}  onClick={()=>onsubmithandler} type="submit" positive content="submit" loading={submiting}/>
           <Button
+         
             onClick={() => seteditmode(false)}
             negative
             content="Cancel"

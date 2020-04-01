@@ -1,4 +1,4 @@
-import React from "react";
+import React, { SyntheticEvent } from "react";
 import { Grid } from "semantic-ui-react";
 import { IActivity } from "../../../App/models/activity";
 import { ActivityList } from "./ActivityList";
@@ -13,7 +13,9 @@ seteditmode:(editmode:boolean)=>void;
 SetSelectedActivity:(activity:IActivity|null)=>void;
 HandleCreateActivity:(activity:IActivity)=>void;
 HandleEditActivity:(activity:IActivity)=>void;
-HandleDeleteActivity:(id:string)=>void;
+HandleDeleteActivity:(e:SyntheticEvent<HTMLButtonElement>,id:string)=>void;
+target:string;
+submiting:boolean;
 }
 export const ActivityDashoard:React.FC<Iprops> = ({activities,
   SetSelectActivity,
@@ -23,7 +25,9 @@ export const ActivityDashoard:React.FC<Iprops> = ({activities,
   SetSelectedActivity,
   HandleCreateActivity,
   HandleEditActivity,
-  HandleDeleteActivity
+  HandleDeleteActivity,
+  submiting,
+  target
 }) => {
   return (
     <Grid>
@@ -31,21 +35,30 @@ export const ActivityDashoard:React.FC<Iprops> = ({activities,
        <ActivityList activities={activities} 
        SetSelectActivity={SetSelectActivity} 
         HandleDeleteActivity={HandleDeleteActivity}
+        submiting={submiting}
+        target={target}
   />
       </Grid.Column>
       <Grid.Column width={6}>
      
-{  SelectActivity&& !editmode && <ActivityDetails  Activity={SelectActivity}
+{  SelectActivity&& !editmode && 
+<ActivityDetails key={ SelectActivity?.id||0}
+ Activity={SelectActivity}
  seteditmode={seteditmode} 
  SetSelectedActivity={SetSelectedActivity}
-
+ 
   />
 }    
-  { editmode &&  <ActivityForm 
-  seteditmode={seteditmode} Activity={SelectActivity !}
+  { editmode && 
+   <ActivityForm 
+  seteditmode={seteditmode}
+   zctivity={SelectActivity !}
   key={ SelectActivity?.id||0}
   HandleCreateActivity={HandleCreateActivity}
       HandleEditActivity={HandleEditActivity}
+      submiting={submiting}
+
+
    />}
    
 
