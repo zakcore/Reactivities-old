@@ -1,27 +1,17 @@
-import React, { useState, FormEvent, useEffect } from "react";
+import React, { useState, FormEvent, useEffect, useContext } from "react";
 import { Segment, Form, Button } from "semantic-ui-react";
 import { IActivity } from "../../../App/models/activity";
 import {v4 as uuid} from 'uuid';
-interface Iprops {
-  seteditmode: (editmode: boolean) => void;
-  zctivity: IActivity;
-HandleCreateActivity:(activity:IActivity)=>void;
-HandleEditActivity:(activity:IActivity)=>void;
-submiting:boolean;
-}
+import ActivityStore from '../../../App/stores/activityStore'
+import { observer } from "mobx-react-lite";
 
-export const ActivityForm: React.FC<Iprops> = ({
-  seteditmode,
-  zctivity,
-  HandleCreateActivity,
-  HandleEditActivity,
-  submiting,
-  
-}) => {
-
+ const ActivityForm: React.FC= () =>
+ {
+const activityStore=useContext(ActivityStore)
+const {selectedActivity,CreateActivity,submitting,CloseForm,EditActivity}=activityStore
   const intializeactivity = () => {
-    if (zctivity) {
-      return zctivity;
+    if (selectedActivity) {
+      return selectedActivity;
     } else {
       return {
         id: "",
@@ -49,7 +39,7 @@ export const ActivityForm: React.FC<Iprops> = ({
    };
   
    useEffect(()=>{
-    if(JSON.stringify(zctivity)!==JSON.stringify(Activity)){
+    if(JSON.stringify(selectedActivity)!==JSON.stringify(Activity)){
       setbtnst(false)
      
     }else{
@@ -57,15 +47,14 @@ export const ActivityForm: React.FC<Iprops> = ({
     }
 
 
-   },[Activity])
+   },[Activity,selectedActivity])
+
   const onsubmithandler=()=>{
 
     if(Activity.id.length>0){
-
-      HandleEditActivity(Activity);
-      
+      EditActivity(Activity);
     }else{
-      HandleCreateActivity({...Activity,id:uuid()})
+      CreateActivity({...Activity,id:uuid()})
 
     }
 
@@ -116,15 +105,12 @@ export const ActivityForm: React.FC<Iprops> = ({
         />
         <Button.Group widths={2}>
       
-          <Button disabled={btnst}  onClick={()=>onsubmithandler} type="submit" positive content="submit" loading={submiting}/>
-          <Button
-         
-            onClick={() => seteditmode(false)}
-            negative
-            content="Cancel"
-          />
+          <Button disabled={btnst}  onClick={()=>onsubmithandler}
+           type="submit" positive content="submit" loading={submitting}/>
+          <Button onClick={CloseForm} negative content="Cancel"/>
         </Button.Group>
       </Form>
     </Segment>
   );
 };
+export default observer(ActivityForm);
