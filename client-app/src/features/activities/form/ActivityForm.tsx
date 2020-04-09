@@ -1,72 +1,83 @@
-import React, { useState, FormEvent, useEffect, useContext } from "react";
+import React, {
+  useState,
+  FormEvent,
+  useEffect,
+  useContext,
+} from "react";
 import { Segment, Form, Button } from "semantic-ui-react";
 import { IActivity } from "../../../App/models/activity";
-import {v4 as uuid} from 'uuid';
-import ActivityStore from '../../../App/stores/activityStore'
+import { v4 as uuid } from "uuid";
+import ActivityStore from "../../../App/stores/activityStore";
 import { observer } from "mobx-react-lite";
+import { RouteComponentProps } from "react-router-dom";
+interface idpara {
+  id: string;
+}
+const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) => {
+  const activityStore = useContext(ActivityStore);
+  const {
+    selectedActivity,
+    CreateActivity,
+    submitting,
+    EditActivity,
+    LoadActivity,
+    CleanActivity
+  } = activityStore;
 
- const ActivityForm: React.FC= () =>
- {
-const activityStore=useContext(ActivityStore)
-const {selectedActivity,CreateActivity,submitting,CloseForm,EditActivity}=activityStore
-  const intializeactivity = () => {
-    if (selectedActivity) {
-      return selectedActivity;
-    } else {
-      return {
-        id: "",
-        title: "",
-        description: "",
-        category: "",
-        date: "",
-        city: "",
-        venue: ""
-      };
-    }
-   
+  const [Activity, initactivity] = useState<IActivity>({
+    id: "",
+    title: "",
+    description: "",
+    category: "",
+    date: "",
+    city: "",
+    venue: "",
+  });
+  const [btnst, setbtnst] = useState<boolean>(true);
 
+  const onchangeeventhandler = (
+    event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.currentTarget;
+    initactivity({ ...Activity, [name]: value });
   };
 
- 
-  const [Activity, initactivity] = useState<IActivity>(intializeactivity);
-  const [btnst,setbtnst]=useState<boolean>(true);
-  const  onchangeeventhandler = (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = event.currentTarget;
-     initactivity({ ...Activity, [name]: value });
-
-     
+  useEffect(() => {
+    if (match.params.id && Activity.id.length===0)
+      LoadActivity(match.params.id).then(
+        () => selectedActivity && initactivity(selectedActivity)
+      );
+      return ()=>{
+        CleanActivity()
+      }
       
-   };
-  
-   useEffect(()=>{
-    if(JSON.stringify(selectedActivity)!==JSON.stringify(Activity)){
-      setbtnst(false)
-     
-    }else{
-      setbtnst(true)
+  },[selectedActivity,match.params.id,Activity.id.length,CleanActivity,LoadActivity]);
+
+  useEffect(() => {
+    if (JSON.stringify(selectedActivity) !== JSON.stringify(Activity)) {
+      setbtnst(false);
+    } else {
+      setbtnst(true);
     }
+  }, [Activity, selectedActivity]);
 
+  const onsubmithandler = () => {
+    if (Activity.id.length > 0) {
+      EditActivity(Activity).then(()=>{
 
-   },[Activity,selectedActivity])
-
-  const onsubmithandler=()=>{
-
-    if(Activity.id.length>0){
-      EditActivity(Activity);
-    }else{
-      CreateActivity({...Activity,id:uuid()})
-
+          history.push(`/activities/${Activity.id}`)
+      });
+    } else {
+      CreateActivity({ ...Activity, id: uuid() });
     }
-
-    
-  }
+  };
   return (
-    
-    <Segment>
-     
-      <Form  onSubmit={onsubmithandler}>
+    <Segment clearing>
+      <Form onSubmit={onsubmithandler}>
         <Form.Input
-          onChange={(e:FormEvent<HTMLInputElement | HTMLTextAreaElement>)=>onchangeeventhandler(e)}
+          onChange={(e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+            onchangeeventhandler(e)
+          }
           name="title"
           placeholder="Title"
           value={Activity.title}
@@ -103,12 +114,21 @@ const {selectedActivity,CreateActivity,submitting,CloseForm,EditActivity}=activi
           placeholder="Venue"
           value={Activity.venue}
         />
-        <Button.Group widths={2}>
-      
-          <Button disabled={btnst}  onClick={()=>onsubmithandler}
-           type="submit" positive content="submit" loading={submitting}/>
-          <Button onClick={CloseForm} negative content="Cancel"/>
-        </Button.Group>
+        <Button
+          disabled={btnst}
+          onClick={() => onsubmithandler}
+          type="submit"
+          positive
+          content="submit"
+          loading={submitting}
+          floated="right"
+        />
+        <Button
+          onClick={()=>{history.push('/activities')}}
+          floated="right"
+          negative
+          content="Cancel"
+        />
       </Form>
     </Segment>
   );

@@ -5,10 +5,8 @@ import agent from "../api/agent";
 configure({'enforceActions':'always'})
 class ActivityStore {
   @observable activityRegistry = new Map();
-  @observable activities: IActivity[] = [];
-  @observable selectedActivity: IActivity | undefined;
+  @observable selectedActivity: IActivity|null= null;
   @observable loadingInitial = false;
-  @observable editMode = false;
   @observable submitting = false;
   @observable target = "";
 
@@ -25,7 +23,7 @@ return Array.from(this.activityRegistry.values()).sort((a,b) => Date.parse(a.dat
           this.activityRegistry.set(activity.id,activity)
           this.loadingInitial = false;
         });
-      }
+       }
       )
     } catch (err) {
       console.log(err);
@@ -36,35 +34,23 @@ return Array.from(this.activityRegistry.values()).sort((a,b) => Date.parse(a.dat
 
   @action selectActivity = (id: string) => {
     this.selectedActivity = this.activityRegistry.get(id);
-    this.editMode = false;
-  };
+   };
 
-  @action OpenForm = () => {
-    this.editMode = true;
-    this.selectedActivity = undefined;
-  };
-  @action CloseForm= ()=>{
-    this.editMode = false;
-  }
   
-  @action CloseDetail= ()=>{
-    this.selectedActivity = undefined;
-  }
-
-@action OpenEditForm=()=>{
-this.editMode=true;
-}
+ 
+  
+   
+ 
 @action EditActivity=async (activity:IActivity)=>{
 
+  this.submitting=true
 try{
   await agent.Activities.update(activity)
   runInAction('update activities',()=>{
-    this.submitting=true
-    this.submitting=false
     this.activityRegistry.set(activity.id,activity)
+    this.submitting=false
     this.selectedActivity=activity;
-    this.editMode=false;
-  })
+   })
 }catch(e){
 console.log(e);
 runInAction('update activities err',()=>{
@@ -83,8 +69,7 @@ runInAction('update activities err',()=>{
         this.activityRegistry.set(activity.id,activity)
         this.selectedActivity=activity;
         this.submitting = false;
-        this.editMode=false;
-      })
+       })
      
     } catch (e) {
       console.log(e);
@@ -114,6 +99,41 @@ runInAction('update activities err',()=>{
     }
 
   }
+
+  @action LoadActivity= async (id:string)=>{
+    let activity=this.steactivity(id);
+    if(activity){
+      this.selectedActivity=activity;
+    }else{
+      this.loadingInitial=true;
+      try{
+        activity=await agent.Activities.details(id)
+        runInAction('getting single activity',()=>{
+          this.selectedActivity=activity;
+          this.loadingInitial=false;
+        })
+      }catch(e){
+        console.log(e);
+        runInAction('errr',()=>{
+
+          this.loadingInitial=false;
+        })
+
+      }
+
+
+    }
+  
+  }
+  @action CleanActivity=()=>{
+    this.selectedActivity=null
+  }
+  steactivity=(id:string)=>{
+    return (this.activityRegistry.get(id))
+  }
+
+ 
 }
+
 
 export default createContext(new ActivityStore());
