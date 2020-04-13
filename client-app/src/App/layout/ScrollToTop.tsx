@@ -1,5 +1,6 @@
 import  { useEffect } from "react";
 import { useLocation, withRouter } from "react-router-dom";
+import { observer } from "mobx-react-lite";
 
  const ScrollToTop =({children}:any)=> {
   const { pathname } = useLocation();
@@ -10,4 +11,4 @@ import { useLocation, withRouter } from "react-router-dom";
 
   return children;
 }
-export default withRouter(ScrollToTop);
+export default withRouter(observer(ScrollToTop));

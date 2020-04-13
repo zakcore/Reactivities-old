@@ -4,12 +4,13 @@ import React, {
   useEffect,
   useContext,
 } from "react";
-import { Segment, Form, Button } from "semantic-ui-react";
+import { Segment, Form, Button, GridColumn, Grid } from "semantic-ui-react";
 import { IActivity } from "../../../App/models/activity";
 import { v4 as uuid } from "uuid";
 import ActivityStore from "../../../App/stores/activityStore";
 import { observer } from "mobx-react-lite";
 import { RouteComponentProps } from "react-router-dom";
+import { LoadingComponent } from "../../../App/layout/LoadingComponent";
 interface idpara {
   id: string;
 }
@@ -21,7 +22,8 @@ const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) 
     submitting,
     EditActivity,
     LoadActivity,
-    CleanActivity
+    CleanActivity,
+    loadingInitial
   } = activityStore;
 
   const [Activity, initactivity] = useState<IActivity>({
@@ -33,33 +35,44 @@ const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) 
     city: "",
     venue: "",
   });
+  
+  
+    const[actforbtn,setactforbn]=useState<IActivity|null>(selectedActivity);
   const [btnst, setbtnst] = useState<boolean>(true);
-
-  const onchangeeventhandler = (
-    event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = event.currentTarget;
-    initactivity({ ...Activity, [name]: value });
-  };
-
-  useEffect(() => {
-    if (match.params.id && Activity.id.length===0)
-      LoadActivity(match.params.id).then(
-        () => selectedActivity && initactivity(selectedActivity)
-      );
+  
+   useEffect(() => {
+    if (match.params.id && Activity.id.length===0){
+      LoadActivity(match.params.id) 
+         if (selectedActivity!==null )
+        { 
+          initactivity(selectedActivity) 
+          setactforbn(selectedActivity)
+        }
+       
+    }
       return ()=>{
         CleanActivity()
       }
-      
+    
+    
   },[selectedActivity,match.params.id,Activity.id.length,CleanActivity,LoadActivity]);
 
+  const onchangeeventhandler = (
+    event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+      const { name, value } = event.currentTarget;
+      initactivity({ ...Activity, [name]: value });
+      
+
+    };
   useEffect(() => {
-    if (JSON.stringify(selectedActivity) !== JSON.stringify(Activity)) {
-      setbtnst(false);
-    } else {
+    if(actforbtn!==null && JSON.stringify(actforbtn) === JSON.stringify(Activity)){
       setbtnst(true);
+    } else {
+      setbtnst(false);
     }
-  }, [Activity, selectedActivity]);
+ 
+  }, [Activity,actforbtn]);
 
   const onsubmithandler = () => {
     if (Activity.id.length > 0) {
@@ -71,7 +84,12 @@ const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) 
       CreateActivity({ ...Activity, id: uuid() });
     }
   };
+  if(loadingInitial){ return (<LoadingComponent content='activity loading......'  />)}
   return (
+
+    <Grid>
+    <GridColumn width='10' >
+
     <Segment clearing>
       <Form onSubmit={onsubmithandler}>
         <Form.Input
@@ -131,6 +149,11 @@ const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) 
         />
       </Form>
     </Segment>
+    </GridColumn>
+
+    </Grid>
+   
   );
 };
 export default observer(ActivityForm);
+

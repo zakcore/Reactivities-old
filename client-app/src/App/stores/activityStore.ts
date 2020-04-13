@@ -11,7 +11,26 @@ class ActivityStore {
   @observable target = "";
 
 @computed get ActivitiesByDate (){
-return Array.from(this.activityRegistry.values()).sort((a,b) => Date.parse(a.date)- Date.parse(b.date))
+return this.GroupActivitiesByDate(Array.from(this.activityRegistry.values()))
+}
+
+  GroupActivitiesByDate (activities:IActivity[]){
+activities.sort((a,b) => Date.parse(a.date)- Date.parse(b.date));
+return Object.entries(activities.reduce( (ac,activity) =>{
+const date=activity.date.split('T')[0];
+if(ac[date]){
+ac[date]=[...ac[date],activity]
+}else{
+  ac[date]=[activity];
+}
+
+
+// ac[date]=ac[date]?[...ac[date],activity]:[activity];
+return ac
+},{}as {[key:string]:IActivity[]} ))
+
+
+
 }
   @action loadActivities = async () => {
     this.loadingInitial = true;
@@ -128,7 +147,7 @@ runInAction('update activities err',()=>{
   @action CleanActivity=()=>{
     this.selectedActivity=null
   }
-  steactivity=(id:string)=>{
+  @action steactivity=(id:string)=>{
     return (this.activityRegistry.get(id))
   }
 
