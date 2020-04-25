@@ -23,7 +23,7 @@ const ActivityDetails: React.FC<RouteComponentProps<idpara>> = ({ match,history 
     LoadActivity(match.params.id);
   }, [LoadActivity,match.params.id]);
 
-  if (loadingInitial ||!selectedActivity) {
+  if (loadingInitial || !selectedActivity) {
     return <LoadingComponent content="activity loading......" />;
   }
   return (

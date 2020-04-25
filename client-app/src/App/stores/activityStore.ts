@@ -124,20 +124,26 @@ runInAction('update activities err',()=>{
     if(activity){
       this.selectedActivity=activity;
     }else{
-      this.loadingInitial=true;
       try{
+        this.loadingInitial=true;
         activity=await agent.Activities.details(id)
         runInAction('getting single activity',()=>{
           this.selectedActivity=activity;
           this.loadingInitial=false;
+        
         })
       }catch(e){
         console.log(e);
         runInAction('errr',()=>{
-
           this.loadingInitial=false;
         })
 
+      }
+      finally{
+
+        runInAction('errr',()=>{
+          this.loadingInitial=false;
+        })
       }
 
 

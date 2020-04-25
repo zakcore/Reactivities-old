@@ -1,6 +1,15 @@
 bin
 obj
+.gitignore
 .vscode
 .DS_Store
 appsettings.json
+.csproj
 *.db
+.vs/config/applicationhost.config
+.vs/reactivities/v15/.suo
+.vs/reactivities/v15/Server/sqlite3/db.lock
+.vs/reactivities/v15/Server/sqlite3/storage.ide
+.vs/reactivities/v15/Server/sqlite3/storage.ide-shm
+.vs/reactivities/v15/Server/sqlite3/storage.ide-wal
+API/API.csproj.user
