@@ -2,6 +2,9 @@ import { observable, action, computed, configure, runInAction } from "mobx";
 import { createContext, SyntheticEvent } from "react";
 import { IActivity } from "../models/activity";
 import agent from "../api/agent";
+import { history } from "../..";
+import { toast } from "react-toastify";
+
 configure({'enforceActions':'always'})
 class ActivityStore {
   @observable activityRegistry = new Map();
@@ -15,9 +18,9 @@ return this.GroupActivitiesByDate(Array.from(this.activityRegistry.values()))
 }
 
   GroupActivitiesByDate (activities:IActivity[]){
-activities.sort((a,b) => Date.parse(a.date)- Date.parse(b.date));
+activities.sort((a,b) => a.date.getTime()- b.date.getTime());
 return Object.entries(activities.reduce( (ac,activity) =>{
-const date=activity.date.split('T')[0];
+const date=activity.date.toISOString().split('T')[0];
 if(ac[date]){
 ac[date]=[...ac[date],activity]
 }else{
@@ -38,7 +41,7 @@ return ac
       const activities = await agent.Activities.list();
       runInAction('loading activities',()=>{
         activities.forEach((activity) => {
-          activity.date = activity.date.split(".")[0];
+          activity.date = new Date(activity.date);
           this.activityRegistry.set(activity.id,activity)
           this.loadingInitial = false;
         });
@@ -70,8 +73,11 @@ try{
     this.submitting=false
     this.selectedActivity=activity;
    })
-}catch(e){
-console.log(e);
+   history.push(`/activities/${activity.id}`)
+}
+catch(e){
+console.log(e.reponse);
+toast.error("problem!!!!!!!!!!!!")
 runInAction('update activities err',()=>{
   this.submitting=false;
 })
@@ -84,16 +90,17 @@ runInAction('update activities err',()=>{
       this.submitting = true;
       await agent.Activities.create(activity);
       runInAction('create activities',()=>{
-
+          
         this.activityRegistry.set(activity.id,activity)
         this.selectedActivity=activity;
         this.submitting = false;
        })
-     
+       history.push(`/activities/${activity.id}`);
+
     } catch (e) {
-      console.log(e);
+      console.log(e.reponse);
       runInAction('create activities',()=>{
-   
+        toast.error("problem!!!!!!!!!!!!")
           this.submitting = false;
       })
     }
@@ -123,15 +130,19 @@ runInAction('update activities err',()=>{
     let activity=this.steactivity(id);
     if(activity){
       this.selectedActivity=activity;
+      return activity
     }else{
+      this.loadingInitial=true;
       try{
-        this.loadingInitial=true;
-        activity=await agent.Activities.details(id)
+          activity= await agent.Activities.details(id);
         runInAction('getting single activity',()=>{
+          
+          activity.date = new Date(activity.date);
           this.selectedActivity=activity;
+          this.activityRegistry.set(activity.id,activity)
           this.loadingInitial=false;
-        
         })
+        return activity;
       }catch(e){
         console.log(e);
         runInAction('errr',()=>{
