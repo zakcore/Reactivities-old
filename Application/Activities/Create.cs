@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Domain;
 using MediatR;
 using Persistence;
-using System.ComponentModel.DataAnnotations;
 using FluentValidation;
 
 namespace Application.Activities
