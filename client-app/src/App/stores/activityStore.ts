@@ -1,12 +1,20 @@
-import { observable, action, computed, configure, runInAction } from "mobx";
-import { createContext, SyntheticEvent } from "react";
+import { observable, action, computed, runInAction } from "mobx";
+import {  SyntheticEvent } from "react";
 import { IActivity } from "../models/activity";
 import agent from "../api/agent";
 import { history } from "../..";
 import { toast } from "react-toastify";
+import {RootStore} from "./rootStore"
 
-configure({'enforceActions':'always'})
 class ActivityStore {
+
+  rootStore:RootStore;
+  constructor(rts:RootStore){
+    this.rootStore=rts;
+  }
+
+
+
   @observable activityRegistry = new Map();
   @observable selectedActivity: IActivity|null= null;
   @observable loadingInitial = false;
@@ -172,4 +180,5 @@ runInAction('update activities err',()=>{
 }
 
 
-export default createContext(new ActivityStore());
+export default  ActivityStore;
+// export default createContext(new ActivityStore());

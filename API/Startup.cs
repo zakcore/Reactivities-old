@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using API.Middleware;
 using Application.Activities;
 using Application.Interfaces;
+using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
 using Infrastructure.Security;
@@ -14,7 +15,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -41,7 +41,7 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<DataContext>(opt =>{
-
+                    opt.UseLazyLoadingProxies();
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
              services.AddCors(opt=>{
@@ -53,6 +53,7 @@ namespace API
             });
           
             services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddAutoMapper (typeof(List.Handler));
             services.AddMvc(
 
                 opt=>{
@@ -69,11 +70,17 @@ namespace API
                 identitybuilder.AddEntityFrameworkStores<DataContext>();
 
                 identitybuilder.AddSignInManager<SignInManager<AppUser>>();
+                services.AddAuthorization(opt =>
+                    opt.AddPolicy("IsActivityHost",policy =>
+                    policy.Requirements.Add(new IsHostRequirment())
+                    )
+                );
+
+                services.AddTransient<IAuthorizationHandler,IsHostRequirmentHandler>();
 
                 services.AddScoped<IJwtGenerator,JwtGenerator>();
                 
                 services.AddScoped<IUserAccessor,UserAccessor>();
-
 
                 var key=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(

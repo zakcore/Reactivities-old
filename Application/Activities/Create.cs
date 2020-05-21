@@ -5,46 +5,53 @@ using Domain;
 using MediatR;
 using Persistence;
 using FluentValidation;
+using Application.Interfaces;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Activities
 {
     public class Create
     {
         public class Command : IRequest
-        {   
+        {
 
-              public Guid Id { get; set; }
-             public string Title { get; set; }
-             public string Description { get; set; }
+            public Guid Id { get; set; }
+            public string Title { get; set; }
+            public string Description { get; set; }
             public string Category { get; set; }
             public DateTime Date { get; set; }
             public string City { get; set; }
             public string Venue { get; set; }
-            
-            
+
+
         }
-        public class  CommandValidator:AbstractValidator<Command>{
-                public CommandValidator()
-                {
-                    RuleFor(x=>x.Title).NotEmpty();
-                    RuleFor(x=>x.Description).NotEmpty();
-                    RuleFor(x=>x.Category).NotEmpty();
-                    RuleFor(x=>x.Date).NotEmpty();
-                    RuleFor(x=>x.City).NotEmpty();
-                    RuleFor(x=>x.Venue).NotEmpty();
-          
-                }
-            
+        public class CommandValidator : AbstractValidator<Command>
+        {
+            public CommandValidator()
+            {
+                RuleFor(x => x.Title).NotEmpty();
+                RuleFor(x => x.Description).NotEmpty();
+                RuleFor(x => x.Category).NotEmpty();
+                RuleFor(x => x.Date).NotEmpty();
+                RuleFor(x => x.City).NotEmpty();
+                RuleFor(x => x.Venue).NotEmpty();
+
+            }
+
         }
         public class Handler : IRequestHandler<Command>
         {
             private readonly DataContext _context;
-            public Handler(DataContext context)
+            private readonly IUserAccessor _IUserAccessor;
+            public Handler(DataContext context, IUserAccessor IUserAccessor)
             {
+                this._IUserAccessor = IUserAccessor;
                 this._context = context;
             }
             public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
             {
+
                 var activity = new Activity
                 {
 
@@ -56,10 +63,22 @@ namespace Application.Activities
                     City = request.City,
                     Venue = request.Venue
                 };
-                 _context.Activities.Add(activity);
-               var succes=await _context.SaveChangesAsync() >0;
-                if(succes) return Unit.Value;
-                throw new Exception ("problem saving changes");
+                _context.Activities.Add(activity);
+                  var user= await _context.Users.SingleOrDefaultAsync(x => x.UserName == _IUserAccessor.GetCurrentUserName());
+                  var attendee=new UserActivity{
+                      AppUser=user,
+                      Activity=activity,
+                      IsHost=true,
+                      DateJoined= DateTime.Now
+
+                  };
+                
+                _context.UserActivities.Add(attendee);
+
+
+                var succes = await _context.SaveChangesAsync() > 0;
+                if (succes) return Unit.Value;
+                throw new Exception("problem saving changes");
 
             }
         }
