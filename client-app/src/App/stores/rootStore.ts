@@ -4,6 +4,7 @@ import { createContext } from "react";
 import {configure} from "mobx"
 import CommonStore from "./common/commonStore";
 import { ModalStore } from "./modalstore";
+
 configure({'enforceActions':'always'})
 export class RootStore{
 

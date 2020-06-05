@@ -20,7 +20,7 @@ import { RouteStoreContext } from "../../../App/stores/rootStore";
 
     const valiator=combineValidators({
     title:isRequired({message:'the title is required'}),
-    category:isRequired('category'),
+    category:isRequired('Category'),
     description : composeValidators (
       isRequired('description'),
       hasLengthGreaterThan(4)({message:'description needs at least 5 caracthers'}))(),
@@ -51,20 +51,33 @@ const ActivityForm: React.FC<RouteComponentProps<idpara>> = ({ match,history }) 
      if (match.params.id){
         setloading(true);
         LoadActivity(match.params.id).then(
-          (activity)=>{
-            if(activity!==undefined){
-  
-  
+          activity=>{
               initactivity(new ActivityFormValues(activity)) 
-            }
              }).finally(()=>{
           setloading(false);
-  
         })
     }
     
     
-  },[match.params.id,LoadActivity]);
+  },[LoadActivity,match.params.id]);
+
+
+
+  // useEffect(() => {
+  //   if (match.params.id) {
+  //     setLoading(true);
+  //     loadActivity(match.params.id)
+  //       .then(activity => {
+  //         setActivity(new ActivityFormValues(activity));
+  //       })
+  //       .finally(() => setLoading(false));
+  //   }
+  // }, [loadActivity, match.params.id]);
+
+
+
+
+
 
  
   // useEffect(() => {
@@ -111,13 +124,15 @@ Activity.date=CombineDateAnTime(values.date,values.time);
            placeholder="Description"
           value={Activity.description}
         />
-        <Field
-          component={SelectInput}
-          name="category"
-          placeholder="Category"
-          options={category}
-          value={Activity.category}
-        />
+         <Field
+                  component={SelectInput}
+                  options={category}
+                  name='category'
+                  placeholder='Category'
+                  value={Activity.category}
+                />
+
+
         <Form.Group widths='equal'>
         <Field
           component={DateInput}

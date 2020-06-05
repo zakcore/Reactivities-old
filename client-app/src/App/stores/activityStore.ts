@@ -1,10 +1,11 @@
-import { observable, action, computed, runInAction } from "mobx";
+import { observable, action, computed, runInAction, toJS } from "mobx";
 import {  SyntheticEvent } from "react";
-import { IActivity } from "../models/activity";
+import { IActivity,IAttendees } from "../models/activity";
 import agent from "../api/agent";
 import { history } from "../..";
 import { toast } from "react-toastify";
 import {RootStore} from "./rootStore"
+import { SetActivityProps, SetAtendees } from "../common/Util/Util";
 
 class ActivityStore {
 
@@ -19,6 +20,8 @@ class ActivityStore {
   @observable selectedActivity: IActivity|null= null;
   @observable loadingInitial = false;
   @observable submitting = false;
+  @observable loading = false;
+  @observable disabled = false;
   @observable target = "";
 
 @computed get ActivitiesByDate (){
@@ -48,9 +51,11 @@ return ac
     try {
       const activities = await agent.Activities.list();
       runInAction('loading activities',()=>{
-        activities.forEach((activity) => {
-          activity.date = new Date(activity.date);
-          this.activityRegistry.set(activity.id,activity)
+        activities.forEach(ac => {
+          if(this.rootStore.userStore.user){
+            SetActivityProps(ac,this.rootStore.userStore.user)  
+          }
+           this.activityRegistry.set(ac.id,ac)
           this.loadingInitial = false;
         });
        }
@@ -97,6 +102,12 @@ runInAction('update activities err',()=>{
     try {
       this.submitting = true;
       await agent.Activities.create(activity);
+      const attende=SetAtendees(this.rootStore.userStore.user!)
+      attende.isHost=true;
+      let attendees:IAttendees[]=[];
+      attendees.push(attende);
+      activity.atendees=attendees;
+      activity.ishost=true;
       runInAction('create activities',()=>{
           
         this.activityRegistry.set(activity.id,activity)
@@ -135,17 +146,18 @@ runInAction('update activities err',()=>{
   }
 
   @action LoadActivity= async (id:string)=>{
-    let activity=this.steactivity(id);
+    let activity = this.steactivity(id);
     if(activity){
       this.selectedActivity=activity;
-      return activity
-    }else{
+            return toJS(activity);
+
+    }
+    else{
       this.loadingInitial=true;
       try{
           activity= await agent.Activities.details(id);
         runInAction('getting single activity',()=>{
-          
-          activity.date = new Date(activity.date);
+          SetActivityProps(activity,this.rootStore.userStore.user!)  
           this.selectedActivity=activity;
           this.activityRegistry.set(activity.id,activity)
           this.loadingInitial=false;
@@ -173,8 +185,77 @@ runInAction('update activities err',()=>{
     this.selectedActivity=null
   }
   @action steactivity=(id:string)=>{
-    return (this.activityRegistry.get(id))
+    return this.activityRegistry.get(id)
   }
+
+
+
+  @action JoinAtendence= async () =>{
+
+    const atendence = SetAtendees(this.rootStore.userStore.user!)
+    this.loading=true;
+    this.disabled=true;
+    try{
+     await  agent.Activities.attend(this.selectedActivity!.id);
+     runInAction(()=>{
+
+       if(this.selectedActivity)
+       {
+         this.selectedActivity.atendees.push(atendence)
+         this.activityRegistry.set(this.selectedActivity?.id,this.selectedActivity);
+         this.selectedActivity.isgoing = true;
+         this.loading=false;
+         this.disabled=false;
+       }
+
+     })
+    }
+    catch(error){
+    toast.error("problem signing in")
+    runInAction(()=>{
+
+      this.loading=false;
+      this.disabled=false;
+    })
+
+    }
+
+  }
+  
+  @action CancelAtendence = async()=>{
+    const atendence = SetAtendees(this.rootStore.userStore.user!)
+    this.loading=true;
+    this.disabled=true;
+    try {
+      await agent.Activities.unattend(this.selectedActivity!.id);
+      runInAction(()=>{
+
+        if(this.selectedActivity){
+          this.selectedActivity.atendees=this.selectedActivity.atendees.filter(a =>a.userName !== atendence.userName)
+          this.activityRegistry.set(this.selectedActivity.id,this.selectedActivity);
+          this.selectedActivity.isgoing = false;
+          this.loading=false;
+          this.disabled=false;
+  
+        }
+
+
+      })
+
+    } 
+    catch (error) {
+      toast.error("problem signing in")
+      runInAction(()=>{
+
+        this.loading=false;
+        this.disabled=false;
+      })
+    }
+
+
+
+  }
+  
 
  
 }
